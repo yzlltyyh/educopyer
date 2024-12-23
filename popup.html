@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>EduCopyer LLM Assistant</title>
+  <style>
+    body {
+      width: 320px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], 
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+    }
+    .error {
+      background-color: #f2dede;
+      color: #a94442;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-group">
+    <label for="apiKey">API Key:</label>
+    <input type="text" id="apiKey" placeholder="输入您的API Key">
+  </div>
+  
+  <div class="form-group">
+    <label for="apiEndpoint">API 端点:</label>
+    <input type="text" id="apiEndpoint" placeholder="https://api.example.com/v1/chat">
+  </div>
+
+  <div class="form-group">
+    <label for="model">选择模型:</label>
+    <select id="model">
+      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+      <option value="gpt-4">GPT-4</option>
+      <option value="claude-2">Claude 2</option>
+      <option value="custom">自定义</option>
+    </select>
+  </div>
+
+  <div class="form-group" id="customModelGroup" style="display: none;">
+    <label for="customModel">自定义模型名称:</label>
+    <input type="text" id="customModel" placeholder="输入模型名称">
+  </div>
+  
+  <div class="form-group">
+    <label for="promptTemplate">Prompt 模板:</label>
+    <textarea id="promptTemplate" placeholder="在这里输入您的prompt模板，使用{text}作为占位符">{text}</textarea>
+  </div>
+  
+  <button id="saveButton">保存设置</button>
+  
+  <div id="status" class="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html> 

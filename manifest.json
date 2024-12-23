@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "EduCopyer LLM Assistant",
+  "version": "1.0",
+  "description": "集成LLM的智能文本处理Chrome扩展",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "clipboardWrite",
+    "activeTab",
+    "scripting",
+    "notifications",
+    "commands"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "copy-to-clipboard": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+C"
+      },
+      "description": "处理并复制到剪贴板"
+    },
+    "simulate-input": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+V"
+      },
+      "description": "处理并模拟输入"
+    }
+  }
+} 
