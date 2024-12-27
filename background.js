@@ -13,6 +13,13 @@ chrome.runtime.onInstalled.addListener(() => {
     title: "处理并模拟输入(5秒后)",
     contexts: ["selection"]
   });
+
+  // 截图分析菜单
+  chrome.contextMenus.create({
+    id: "captureArea",
+    title: "截图分析",
+    contexts: ["page"]
+  });
 });
 
 // 处理右键菜单点击
@@ -21,6 +28,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     processText(info.selectionText, tab, 'clipboard');
   } else if (info.menuItemId === "simulateInput") {
     processText(info.selectionText, tab, 'input');
+  } else if (info.menuItemId === "captureArea") {
+    startCapture(tab);
   }
 });
 
@@ -30,6 +39,19 @@ chrome.commands.onCommand.addListener(async (command) => {
     // 获取当前标签页
     const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
     if (!tab) return;
+
+    if (command === 'toggle-notifications') {
+      // 发送切换通知的消息
+      await sendMessageToContentScript(tab.id, {
+        action: 'toggleNotifications'
+      });
+      return;
+    }
+
+    if (command === 'capture-area') {
+      startCapture(tab);
+      return;
+    }
 
     // 获取选中的文本
     const [{result}] = await chrome.scripting.executeScript({
@@ -56,6 +78,112 @@ chrome.commands.onCommand.addListener(async (command) => {
         error: error.message
       });
     }
+  }
+});
+
+// 开始截图
+async function startCapture(tab) {
+  try {
+    await sendMessageToContentScript(tab.id, {
+      action: 'startCapture'
+    });
+  } catch (error) {
+    console.error('启动截图失败:', error);
+  }
+}
+
+// 处理截图
+async function processImage(imageData, tab) {
+  try {
+    // 从存储中获取API配置
+    const config = await chrome.storage.sync.get([
+      'apiKey',
+      'apiEndpoint',
+      'model',
+      'customModel'
+    ]);
+    
+    if (!config.apiKey || !config.apiEndpoint) {
+      throw new Error('请先配置API密钥和端点');
+    }
+
+    const model = config.model === 'custom' ? config.customModel : config.model;
+    console.log('使用模型:', model);
+
+    // 构建多模态请求体
+    const requestBody = {
+      model: model,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "请分析这张图片中的文字，忽略图标和无关内容，将其转换为纯文本格式。只用输出分析转写后的内容，不要任何多余的解释"
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: imageData
+              }
+            }
+          ]
+        }
+      ],
+      max_tokens: 1000
+    };
+
+    // 调用API
+    const response = await fetch(config.apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API响应错误:', response.status, errorText);
+      throw new Error(`API请求失败: ${response.status} ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('API响应:', result);
+
+    // 解析响应
+    const processedText = parseApiResponse(result);
+    
+    // 同时发送复制和输入命令
+    await Promise.all([
+      // 复制到剪贴板
+      sendMessageToContentScript(tab.id, {
+        action: 'processResult',
+        result: processedText,
+        mode: 'clipboard'
+      }),
+      // 模拟输入
+      sendMessageToContentScript(tab.id, {
+        action: 'processResult',
+        result: processedText,
+        mode: 'input'
+      })
+    ]);
+
+  } catch (error) {
+    console.error('处理图片失败:', error);
+    await sendMessageToContentScript(tab.id, {
+      action: 'showError',
+      error: error.message
+    });
+  }
+}
+
+// 监听来自content script的消息
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'processImage') {
+    processImage(message.imageData, sender.tab);
   }
 });
 

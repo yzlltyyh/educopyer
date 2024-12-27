@@ -18,7 +18,14 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["html2canvas.min.js", "content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["html2canvas.min.js"],
+      "matches": ["<all_urls>"]
     }
   ],
   "action": {
@@ -27,15 +34,27 @@
   "commands": {
     "copy-to-clipboard": {
       "suggested_key": {
-        "default": "Ctrl+Shift+C"
+        "default": "Alt+M"
       },
       "description": "处理并复制到剪贴板"
     },
     "simulate-input": {
       "suggested_key": {
-        "default": "Ctrl+Shift+V"
+        "default": "Alt+N"
       },
       "description": "处理并模拟输入"
+    },
+    "toggle-notifications": {
+      "suggested_key": {
+        "default": "Alt+逗号"
+      },
+      "description": "开启/关闭通知提示"
+    },
+    "capture-area": {
+      "suggested_key": {
+        "default": "Alt+句号"
+      },
+      "description": "框选区域并分析"
     }
   }
 } 
