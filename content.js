@@ -235,18 +235,18 @@
                 (activeElement.tagName === 'INPUT' || 
                  activeElement.tagName === 'TEXTAREA' || 
                  activeElement.isContentEditable)) {
-              // 使用一次性的事件监听器来确保只输入一次
-              const inputHandler = () => {
-                document.execCommand('insertText', false, text);
-                showNotification('文本已输入');
-                // 移除事件监听器
-                requestAnimationFrame(() => {
-                  activeElement.removeEventListener('input', inputHandler);
-                });
-              };
-              activeElement.addEventListener('input', inputHandler, { once: true });
-              // 触发输入
-              document.execCommand('insertText', false, text);
+              // 直接设置值或内容
+              if (activeElement.isContentEditable) {
+                activeElement.textContent = text;
+              } else {
+                const originalValue = activeElement.value;
+                const start = activeElement.selectionStart;
+                const end = activeElement.selectionEnd;
+                activeElement.value = originalValue.substring(0, start) + text + originalValue.substring(end);
+                // 更新光标位置
+                activeElement.selectionStart = activeElement.selectionEnd = start + text.length;
+              }
+              showNotification('文本已输入');
             } else {
               showError('请将光标放在输入框中');
             }
