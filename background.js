@@ -192,7 +192,7 @@ function buildRequestBody(text, model, promptTemplate) {
   // 处理prompt模板，替换占位符
   let content;
   if (promptTemplate) {
-    // 如果模板是空的大括号，直接使用选中的文本
+    // 如果模板是空��大括号，直接使用选中的文本
     if (promptTemplate.trim() === '{}') {
       content = text;
     } else {
@@ -238,14 +238,18 @@ async function sendMessageToContentScript(tabId, message, retries = 3) {
         throw new Error('标签页不存在');
       }
 
-      // 尝试注入content script
-      await chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ['content.js']
-      });
-
-      // 等待一小段时间确保content script加载
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 检查content script是否已注入
+      try {
+        await chrome.tabs.sendMessage(tabId, { action: 'ping' });
+      } catch (error) {
+        // content script未注入，进行注入
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ['content.js']
+        });
+        // 等待一小段时间确保content script加载
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
 
       // 发送消息
       await chrome.tabs.sendMessage(tabId, message);
