@@ -1,5 +1,22 @@
 // 创建右键菜单
 chrome.runtime.onInstalled.addListener(() => {
+  // 设置默认配置
+  chrome.storage.sync.get([
+    'apiKey',
+    'apiEndpoint',
+    'model',
+    'promptTemplate'
+  ], (result) => {
+    // 只在没有现有配置时设置默认值
+    const defaults = {
+      apiKey: result.apiKey || '',  // 出于安全考虑，API密钥需要用户手动设置
+      apiEndpoint: result.apiEndpoint || 'https://api.yzlltyyh.com/v1/chat/completions',
+      model: result.model || 'gemini-2.0-flash-exp',
+      promptTemplate: result.promptTemplate || '你是一位专业答题助手。你将严格遵循以下标准化格式回答各类题目：\n\n选择题回答格式：\n答案字母（A/B/C/D）\n紧跟一句不超过20字的核心解释\n示例：A 质能方程体现了质量与能量的转换关系\n\n填空题回答格式：\n多个答案用中文逗号"，"分隔\n每空仅填写标准答案，不加任何修饰\n示例：光合作用，呼吸作用，蒸腾作用\n\n判断题回答格式：\n以"对"或"错"开头\n紧跟一句不超过20字的核心解释\n示例：错 自由落体运动与物体质量无关\n\n简答题回答格式：\n严格控制在150-200字\n采用连续段落，无需分点\n直接切入核心答案，避免废话\n确保答案完整、准确、简洁\n\n论述题回答格式：\n严格控制在500字\n采用连续段落，无需分点\n论述需层次分明，有论证过程\n确保答案系统、深入、全面\n\n注意事项：\n所有回答均使用简体中文\n仅提供答案和必要解释，不作补充说明\n严格遵守字数限制\n保持格式统一规范\n确保专业性和准确性\n\n{}'
+    };
+    chrome.storage.sync.set(defaults);
+  });
+
   // 复制到剪贴板菜单
   chrome.contextMenus.create({
     id: "copyToClipboard",
@@ -192,7 +209,7 @@ function buildRequestBody(text, model, promptTemplate) {
   // 处理prompt模板，替换占位符
   let content;
   if (promptTemplate) {
-    // 如果模板是空��大括号，直接使用选中的文本
+    // 如果模板是空大括号，直接使用选中的文本
     if (promptTemplate.trim() === '{}') {
       content = text;
     } else {
