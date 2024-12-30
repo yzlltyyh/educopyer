@@ -5,14 +5,16 @@ chrome.runtime.onInstalled.addListener(() => {
     'apiKey',
     'apiEndpoint',
     'model',
+    'ocrModel',
     'promptTemplate'
   ], (result) => {
     // 只在没有现有配置时设置默认值
     const defaults = {
       apiKey: result.apiKey || '',  // 出于安全考虑，API密钥需要用户手动设置
       apiEndpoint: result.apiEndpoint || 'https://api.yzlltyyh.com/v1/chat/completions',
-      model: result.model || 'gemini-2.0-flash-exp',
-      promptTemplate: result.promptTemplate || '你是一位专业答题助手。你将严格遵循以下标准化格式回答各类题目：\n\n选择题回答格式：\n答案字母（A/B/C/D）\n紧跟一句不超过20字的核心解释\n示例：A 质能方程体现了质量与能量的转换关系\n\n填空题回答格式：\n多个答案用中文逗号"，"分隔\n每空仅填写标准答案，不加任何修饰\n示例：光合作用，呼吸作用，蒸腾作用\n\n判断题回答格式：\n以"对"或"错"开头\n紧跟一句不超过20字的核心解释\n示例：错 自由落体运动与物体质量无关\n\n简答题回答格式：\n严格控制在150-200字\n采用连续段落，无需分点\n直接切入核心答案，避免废话\n确保答案完整、准确、简洁\n\n论述题回答格式：\n严格控制在500字\n采用连续段落，无需分点\n论述需层次分明，有论证过程\n确保答案系统、深入、全面\n\n注意事项：\n所有回答均使用简体中文\n仅提供答案和必要解释，不作补充说明\n严格遵守字数限制\n保持格式统一规范\n确保专业性和准确性\n\n{}'
+      model: result.model || 'gemini-2.0-flash-exp',  // 默认推理模型
+      ocrModel: result.ocrModel || 'gemini-2.0-flash-exp',  // 默认OCR模型
+      promptTemplate: result.promptTemplate || '{}'
     };
     chrome.storage.sync.set(defaults);
   });
@@ -80,6 +82,20 @@ chrome.commands.onCommand.addListener(async (command) => {
       throw new Error('请先选择要处理的文本');
     }
 
+    // 设置模型
+    if (command === 'set-model') {
+      const modelName = result.trim();
+      if (modelName) {
+        chrome.storage.sync.set({ model: modelName }, () => {
+          sendMessageToContentScript(tab.id, {
+            action: 'showNotification',
+            message: `当前模型已设置为: ${modelName}`
+          });
+        });
+      }
+      return;
+    }
+
     // 根据命令处理文本
     if (command === 'copy-to-clipboard') {
       processText(result, tab, 'clipboard');
@@ -116,20 +132,18 @@ async function processImage(imageData, tab) {
     const config = await chrome.storage.sync.get([
       'apiKey',
       'apiEndpoint',
-      'model',
-      'customModel'
+      'ocrModel'  // 使用OCR专用模型
     ]);
     
     if (!config.apiKey || !config.apiEndpoint) {
       throw new Error('请先配置API密钥和端点');
     }
 
-    const model = config.model === 'custom' ? config.customModel : config.model;
-    console.log('使用模型:', model);
+    console.log('使用OCR模型:', config.ocrModel);
 
     // 构建多模态请求体
     const requestBody = {
-      model: model,
+      model: config.ocrModel,
       messages: [
         {
           role: "user",

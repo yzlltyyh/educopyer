@@ -5,32 +5,50 @@ document.addEventListener('DOMContentLoaded', () => {
     'apiEndpoint',
     'promptTemplate',
     'model',
-    'customModel'
+    'customModel',
+    'ocrModel',
+    'customOcrModel'
   ], (result) => {
     document.getElementById('apiKey').value = result.apiKey || '';
     document.getElementById('apiEndpoint').value = result.apiEndpoint || '';
     document.getElementById('promptTemplate').value = result.promptTemplate || '{text}';
     
+    // 处理推理模型
     const modelSelect = document.getElementById('model');
     const customModelGroup = document.getElementById('customModelGroup');
     const customModelInput = document.getElementById('customModel');
     
-    // 设置选中的模型
     if (result.model) {
-      modelSelect.value = result.model;
-      if (result.model === 'custom') {
+      if (modelSelect.querySelector(`option[value="${result.model}"]`)) {
+        modelSelect.value = result.model;
+      } else {
+        modelSelect.value = 'custom';
         customModelGroup.style.display = 'block';
-        customModelInput.value = result.customModel || '';
+        customModelInput.value = result.model;
       }
     }
 
-    // 监听模型选择变化
     modelSelect.addEventListener('change', () => {
-      if (modelSelect.value === 'custom') {
-        customModelGroup.style.display = 'block';
+      customModelGroup.style.display = modelSelect.value === 'custom' ? 'block' : 'none';
+    });
+
+    // 处理OCR模型
+    const ocrModelSelect = document.getElementById('ocrModel');
+    const customOcrModelGroup = document.getElementById('customOcrModelGroup');
+    const customOcrModelInput = document.getElementById('customOcrModel');
+    
+    if (result.ocrModel) {
+      if (ocrModelSelect.querySelector(`option[value="${result.ocrModel}"]`)) {
+        ocrModelSelect.value = result.ocrModel;
       } else {
-        customModelGroup.style.display = 'none';
+        ocrModelSelect.value = 'custom';
+        customOcrModelGroup.style.display = 'block';
+        customOcrModelInput.value = result.ocrModel;
       }
+    }
+
+    ocrModelSelect.addEventListener('change', () => {
+      customOcrModelGroup.style.display = ocrModelSelect.value === 'custom' ? 'block' : 'none';
     });
   });
 
@@ -39,8 +57,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKey = document.getElementById('apiKey').value.trim();
     const apiEndpoint = document.getElementById('apiEndpoint').value.trim();
     const promptTemplate = document.getElementById('promptTemplate').value.trim();
-    const model = document.getElementById('model').value;
-    const customModel = document.getElementById('customModel').value.trim();
+    
+    // 获取推理模型
+    const modelSelect = document.getElementById('model');
+    const customModelInput = document.getElementById('customModel');
+    const model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
+
+    // 获取OCR模型
+    const ocrModelSelect = document.getElementById('ocrModel');
+    const customOcrModelInput = document.getElementById('customOcrModel');
+    const ocrModel = ocrModelSelect.value === 'custom' ? customOcrModelInput.value.trim() : ocrModelSelect.value;
 
     // 验证输入
     if (!apiKey || !apiEndpoint) {
@@ -48,8 +74,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (model === 'custom' && !customModel) {
-      showStatus('请填写自定义模型名称', false);
+    if (modelSelect.value === 'custom' && !model) {
+      showStatus('请填写自定义推理模型名称', false);
+      return;
+    }
+
+    if (ocrModelSelect.value === 'custom' && !ocrModel) {
+      showStatus('请填写自定义OCR模型名称', false);
       return;
     }
 
@@ -59,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
       apiEndpoint,
       promptTemplate: promptTemplate || '{text}',
       model,
-      customModel
+      ocrModel
     }, () => {
       showStatus('设置已保存', true);
     });

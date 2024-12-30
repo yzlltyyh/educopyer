@@ -55,6 +55,9 @@
         "default": "Alt+Period"
       },
       "description": "框选区域并分析"
+    },
+    "set-model": {
+      "description": "将选中文本设置为当前模型"
     }
   }
 } 
