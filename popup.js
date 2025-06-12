@@ -8,12 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
     'customModel',
     'ocrModel',
     'customOcrModel',
-    'showPreview'
+    'showPreview',
+    'notificationsEnabled'
   ], (result) => {
     document.getElementById('apiKey').value = result.apiKey || '';
     document.getElementById('apiEndpoint').value = result.apiEndpoint || '';
     document.getElementById('promptTemplate').value = result.promptTemplate || '';
     document.getElementById('showPreview').checked = result.showPreview !== false; // 默认为true
+    document.getElementById('notificationsEnabled').checked = result.notificationsEnabled !== false; // 默认为true
 
     // 处理推理模型
     const modelSelect = document.getElementById('model');
@@ -60,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiEndpoint = document.getElementById('apiEndpoint').value.trim();
     const promptTemplate = document.getElementById('promptTemplate').value.trim();
     const showPreview = document.getElementById('showPreview').checked;
+    const notificationsEnabled = document.getElementById('notificationsEnabled').checked;
 
     // 获取推理模型
     const modelSelect = document.getElementById('model');
@@ -94,7 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
       promptTemplate: promptTemplate || '', // 空字符串将使用默认模板
       model,
       ocrModel,
-      showPreview
+      showPreview,
+      notificationsEnabled
     }, () => {
       showStatus('设置已保存', true);
     });

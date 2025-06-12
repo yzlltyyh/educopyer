@@ -1,8 +1,6 @@
 (function() {
   // 用于跟踪正在处理的请求
   let processingRequests = new Set();
-  // 通知开关状态
-  let notificationsEnabled = true;
   // 截图状态
   let isCapturing = false;
   let captureStartPos = null;
@@ -22,10 +20,14 @@
 
     // 处理通知开关命令
     if (message.action === 'toggleNotifications') {
-      notificationsEnabled = !notificationsEnabled;
-      if (notificationsEnabled) {
-        showNotification('通知已开启');
-      }
+      chrome.storage.sync.get(['notificationsEnabled'], (result) => {
+        const newState = !result.notificationsEnabled;
+        chrome.storage.sync.set({ notificationsEnabled: newState }, () => {
+          if (newState) {
+            showNotification('通知已开启');
+          }
+        });
+      });
       return;
     }
 
@@ -272,97 +274,105 @@
 
   // 显示倒计时通知
   function showCountdown(seconds, callback) {
-    if (!notificationsEnabled) {
-      setTimeout(callback, seconds * 1000);
-      return;
-    }
-
-    let remainingSeconds = seconds;
-    const countdownDiv = document.createElement('div');
-    countdownDiv.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background-color: #2196F3;
-      color: white;
-      border-radius: 4px;
-      z-index: 10000;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    `;
-
-    function updateCountdown() {
-      if (!notificationsEnabled) {
-        countdownDiv.remove();
-        callback();
+    chrome.storage.sync.get(['notificationsEnabled'], (result) => {
+      if (result.notificationsEnabled === false) {
+        setTimeout(callback, seconds * 1000);
         return;
       }
 
-      countdownDiv.textContent = ` ${remainingSeconds} 秒`;
-      if (remainingSeconds <= 0) {
-        countdownDiv.remove();
-        callback();
-      } else {
-        remainingSeconds--;
-        setTimeout(updateCountdown, 1000);
-      }
-    }
+      let remainingSeconds = seconds;
+      const countdownDiv = document.createElement('div');
+      countdownDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: #2196F3;
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      `;
 
-    document.body.appendChild(countdownDiv);
-    updateCountdown();
+      function updateCountdown() {
+        chrome.storage.sync.get(['notificationsEnabled'], (result) => {
+          if (result.notificationsEnabled === false) {
+            countdownDiv.remove();
+            callback();
+            return;
+          }
+
+          countdownDiv.textContent = ` ${remainingSeconds} 秒`;
+          if (remainingSeconds <= 0) {
+            countdownDiv.remove();
+            callback();
+          } else {
+            remainingSeconds--;
+            setTimeout(updateCountdown, 1000);
+          }
+        });
+      }
+
+      document.body.appendChild(countdownDiv);
+      updateCountdown();
+    });
   }
 
   // 显示通知
   function showNotification(message) {
-    if (!notificationsEnabled) return;
+    chrome.storage.sync.get(['notificationsEnabled'], (result) => {
+      if (result.notificationsEnabled === false) return;
 
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background-color: #4CAF50;
-      color: white;
-      border-radius: 4px;
-      z-index: 10000;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    `;
-    notification.textContent = message;
-    document.body.appendChild(notification);
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      `;
+      notification.textContent = message;
+      document.body.appendChild(notification);
 
-    // 3秒后移除通知
-    setTimeout(() => {
-      notification.remove();
-    }, 3000);
+      // 3秒后移除通知
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    });
   }
 
   // 显示错误
   function showError(message) {
-    if (!notificationsEnabled) {
-      console.error(message);
-      return;
-    }
+    chrome.storage.sync.get(['notificationsEnabled'], (result) => {
+      if (result.notificationsEnabled === false) {
+        console.error(message);
+        return;
+      }
 
-    const error = document.createElement('div');
-    error.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background-color: #f44336;
-      color: white;
-      border-radius: 4px;
-      z-index: 10000;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    `;
-    error.textContent = message;
-    document.body.appendChild(error);
+      const error = document.createElement('div');
+      error.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: #f44336;
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      `;
+      error.textContent = message;
+      document.body.appendChild(error);
 
-    // 3秒后移除错误提示
-    setTimeout(() => {
-      error.remove();
-    }, 3000);
+      // 3秒后移除错误提示
+      setTimeout(() => {
+        error.remove();
+      }, 3000);
+    });
   }
 
   // 显示图片预览

@@ -54,7 +54,8 @@ chrome.runtime.onInstalled.addListener(() => {
       model: result.model || 'gemini-2.0-flash-exp',  // 默认推理模型
       ocrModel: result.ocrModel || 'gemini-2.0-flash-exp',  // 默认OCR模型
       promptTemplate: result.promptTemplate || defaultPrompt,
-      showPreview: result.showPreview !== false  // 默认显示预览
+      showPreview: result.showPreview !== false,  // 默认显示预览
+      notificationsEnabled: result.notificationsEnabled !== false  // 默认开启通知
     };
     chrome.storage.sync.set(defaults);
   });

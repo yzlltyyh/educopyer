@@ -11,9 +11,8 @@
 
 .capture-area {
   position: fixed;
-  border: 2px solid rgba(30, 144, 255, 0.9);
-  background: rgba(135, 206, 235, 0.3);
+  border: 1px dashed rgba(128, 128, 128, 0.8);
+  background: transparent;
   pointer-events: none;
   z-index: 999998;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
 }
