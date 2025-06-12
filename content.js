@@ -73,10 +73,16 @@
 
     overlay.addEventListener('mousedown', (e) => {
       isSelecting = true;
+      // 使用页面坐标而不是视口坐标
+      const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
       captureStartPos = {
-        x: e.clientX,
-        y: e.clientY
+        x: e.clientX + scrollX,
+        y: e.clientY + scrollY
       };
+
+      // 选区使用fixed定位，所以使用clientX/Y
       selection.style.left = e.clientX + 'px';
       selection.style.top = e.clientY + 'px';
       selection.style.width = '0';
@@ -87,24 +93,37 @@
     overlay.addEventListener('mousemove', (e) => {
       if (!isSelecting) return;
 
-      const width = e.clientX - captureStartPos.x;
-      const height = e.clientY - captureStartPos.y;
+      const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
 
+      const currentX = e.clientX + scrollX;
+      const currentY = e.clientY + scrollY;
+
+      const width = currentX - captureStartPos.x;
+      const height = currentY - captureStartPos.y;
+
+      // 选区显示使用视口坐标
       selection.style.width = Math.abs(width) + 'px';
       selection.style.height = Math.abs(height) + 'px';
-      selection.style.left = (width < 0 ? e.clientX : captureStartPos.x) + 'px';
-      selection.style.top = (height < 0 ? e.clientY : captureStartPos.y) + 'px';
+      selection.style.left = (width < 0 ? e.clientX : e.clientX - Math.abs(width)) + 'px';
+      selection.style.top = (height < 0 ? e.clientY : e.clientY - Math.abs(height)) + 'px';
     });
 
     overlay.addEventListener('mouseup', async (e) => {
       if (!isSelecting) return;
       isSelecting = false;
-      
+
       try {
-        // 获取选区位置和大小
+        // 获取选区的最终位置和大小
         const rect = selection.getBoundingClientRect();
-        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollX = window.scrollX || document.documentElement.scrollLeft;
+        const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+        // 计算页面绝对坐标
+        const absoluteLeft = rect.left + scrollX;
+        const absoluteTop = rect.top + scrollY;
+        const absoluteWidth = rect.width;
+        const absoluteHeight = rect.height;
 
         // 清理UI
         overlay.remove();
@@ -112,97 +131,88 @@
         isCapturing = false;
 
         // 如果选区太小，则取消截图
-        if (rect.width < 10 || rect.height < 10) {
+        if (absoluteWidth < 10 || absoluteHeight < 10) {
           showError('选区太小，请重新选择');
           return;
         }
 
-        // 创建临时容器
-        const container = document.createElement('div');
-        container.style.cssText = `
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: ${rect.width}px;
-          height: ${rect.height}px;
-          overflow: hidden;
-          pointer-events: none;
-        `;
+        // 显示处理提示
+        showNotification('正在截图处理...');
 
-        // 克隆选区内的所有元素
-        const absoluteLeft = rect.left + scrollX;
-        const absoluteTop = rect.top + scrollY;
-        
-        // 创建一个新的包装元素
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = `
-          position: absolute;
-          left: ${-absoluteLeft}px;
-          top: ${-absoluteTop}px;
-          width: ${document.documentElement.scrollWidth}px;
-          height: ${document.documentElement.scrollHeight}px;
-        `;
-
-        // 克隆整个页面并添加到包装器中
-        const clone = document.documentElement.cloneNode(true);
-        wrapper.appendChild(clone);
-        container.appendChild(wrapper);
-        document.body.appendChild(container);
-
-        // 使用html2canvas截图
-        const canvas = await html2canvas(container, {
+        // 直接对整个页面截图，然后裁剪指定区域
+        const canvas = await html2canvas(document.body, {
           backgroundColor: null,
-          scale: window.devicePixelRatio || 1,
+          scale: 1, // 使用固定缩放避免坐标问题
           logging: false,
           useCORS: true,
           allowTaint: true,
-          width: rect.width,
-          height: rect.height,
-          x: 0,
-          y: 0,
           scrollX: 0,
           scrollY: 0,
-          windowWidth: document.documentElement.scrollWidth,
-          windowHeight: document.documentElement.scrollHeight,
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
           imageTimeout: 0,
-          removeContainer: true,
           foreignObjectRendering: true,
           onclone: (clonedDoc) => {
-            // 只复制必要的样式
-            const styles = document.getElementsByTagName('style');
-            const links = document.getElementsByTagName('link');
-            const clonedHead = clonedDoc.getElementsByTagName('head')[0];
-            
-            // 复制样式标签
-            Array.from(styles).forEach(style => {
-              if (style.textContent.includes('@import') || style.textContent.includes('url(')) {
-                clonedHead.appendChild(style.cloneNode(true));
-              }
-            });
-            
-            // 只复制必要的CSS链接
-            Array.from(links).forEach(link => {
-              if (link.rel === 'stylesheet' && !link.href.includes('font')) {
-                clonedHead.appendChild(link.cloneNode(true));
+            // 移除所有可能影响布局的扩展元素
+            const extensionElements = clonedDoc.querySelectorAll('.capture-overlay, .capture-area');
+            extensionElements.forEach(el => el.remove());
+
+            // 确保样式正确加载
+            const originalStyles = document.querySelectorAll('style, link[rel="stylesheet"]');
+            const clonedHead = clonedDoc.head;
+
+            originalStyles.forEach(style => {
+              if (style.tagName === 'STYLE') {
+                const newStyle = clonedDoc.createElement('style');
+                newStyle.textContent = style.textContent;
+                clonedHead.appendChild(newStyle);
+              } else if (style.tagName === 'LINK' && style.rel === 'stylesheet') {
+                const newLink = clonedDoc.createElement('link');
+                newLink.rel = 'stylesheet';
+                newLink.href = style.href;
+                clonedHead.appendChild(newLink);
               }
             });
           }
         });
 
-        // 清理临时元素
-        container.remove();
-        
-        // 转换为base64，使用较低质量以提高性能
-        const imageData = canvas.toDataURL('image/jpeg', 0.8);
-        
+        // 创建裁剪后的canvas
+        const croppedCanvas = document.createElement('canvas');
+        const ctx = croppedCanvas.getContext('2d');
+
+        croppedCanvas.width = absoluteWidth;
+        croppedCanvas.height = absoluteHeight;
+
+        // 从原始canvas中裁剪指定区域
+        ctx.drawImage(
+          canvas,
+          absoluteLeft, absoluteTop, absoluteWidth, absoluteHeight,
+          0, 0, absoluteWidth, absoluteHeight
+        );
+
+        // 转换为base64
+        const imageData = croppedCanvas.toDataURL('image/jpeg', 0.9);
+
+        // 检查是否显示预览
+        chrome.storage.sync.get(['showPreview'], (result) => {
+          if (result.showPreview !== false) {
+            showImagePreview(imageData);
+          }
+        });
+
         // 发送到background处理
         chrome.runtime.sendMessage({
           action: 'processImage',
           imageData: imageData
         });
+
       } catch (error) {
         console.error('截图失败:', error);
         showError('截图失败: ' + error.message);
+        // 确保清理UI
+        if (overlay.parentNode) overlay.remove();
+        if (selection.parentNode) selection.remove();
+        isCapturing = false;
       }
     });
 
@@ -354,4 +364,78 @@
       error.remove();
     }, 3000);
   }
-})(); 
+
+  // 显示图片预览
+  function showImagePreview(imageData) {
+    // 移除已存在的预览
+    const existingPreview = document.getElementById('educopyer-preview');
+    if (existingPreview) {
+      existingPreview.remove();
+    }
+
+    const preview = document.createElement('div');
+    preview.id = 'educopyer-preview';
+    preview.style.cssText = `
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      width: 200px;
+      max-height: 150px;
+      background: white;
+      border: 2px solid #2196F3;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 10001;
+      overflow: hidden;
+      cursor: pointer;
+    `;
+
+    const img = document.createElement('img');
+    img.src = imageData;
+    img.style.cssText = `
+      width: 100%;
+      height: auto;
+      display: block;
+    `;
+
+    const closeBtn = document.createElement('div');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      color: #666;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      preview.remove();
+    });
+
+    preview.appendChild(img);
+    preview.appendChild(closeBtn);
+    document.body.appendChild(preview);
+
+    // 点击预览图片可以关闭
+    preview.addEventListener('click', () => {
+      preview.remove();
+    });
+
+    // 5秒后自动关闭
+    setTimeout(() => {
+      if (preview.parentNode) {
+        preview.remove();
+      }
+    }, 5000);
+  }
+})();

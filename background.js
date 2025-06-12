@@ -8,13 +8,53 @@ chrome.runtime.onInstalled.addListener(() => {
     'ocrModel',
     'promptTemplate'
   ], (result) => {
+    // 默认的专业答题助手提示词
+    const defaultPrompt = `你是一位专业答题助手。你将严格遵循以下标准化格式回答各类题目：
+
+选择题回答格式：
+答案字母（A/B/C/D）
+紧跟一句不超过20字的核心解释
+示例：A 质能方程体现了质量与能量的转换关系
+
+填空题回答格式：
+多个答案用中文逗号"，"分隔
+每空仅填写标准答案，不加任何修饰
+示例：光合作用，呼吸作用，蒸腾作用
+
+判断题回答格式：
+以"对"或"错"开头
+紧跟一句不超过20字的核心解释
+示例：错 自由落体运动与物体质量无关
+
+简答题回答格式：
+严格控制在150-200字
+采用连续段落，无需分点
+直接切入核心答案，避免废话
+确保答案完整、准确、简洁
+
+论述题回答格式：
+严格控制在500字
+采用连续段落，无需分点
+论述需层次分明，有论证过程
+确保答案系统、深入、全面
+
+注意事项：
+所有回答均使用简体中文
+仅提供答案和必要解释，不作补充说明
+严格遵守字数限制
+保持格式统一规范
+确保专业性和准确性
+
+请回答以下题目：{text}`;
+
     // 只在没有现有配置时设置默认值
     const defaults = {
       apiKey: result.apiKey || '',  // 出于安全考虑，API密钥需要用户手动设置
       apiEndpoint: result.apiEndpoint || 'https://api.yzlltyyh.com/v1/chat/completions',
       model: result.model || 'gemini-2.0-flash-exp',  // 默认推理模型
       ocrModel: result.ocrModel || 'gemini-2.0-flash-exp',  // 默认OCR模型
-      promptTemplate: result.promptTemplate || '{}'
+      promptTemplate: result.promptTemplate || defaultPrompt,
+      showPreview: result.showPreview !== false  // 默认显示预览
     };
     chrome.storage.sync.set(defaults);
   });
@@ -212,7 +252,7 @@ async function processImage(imageData, tab) {
 }
 
 // 监听来自content script的消息
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender) => {
   if (message.action === 'processImage') {
     processImage(message.imageData, sender.tab);
   }

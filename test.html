@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduCopyer 扩展测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .question {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .math-formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 18px;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>EduCopyer LLM Assistant 测试页面</h1>
+    
+    <div class="instructions">
+        <h3>测试说明：</h3>
+        <ol>
+            <li><strong>文本处理测试</strong>：选中下面的题目文本，使用快捷键 Alt+M（复制）或 Alt+N（输入）</li>
+            <li><strong>截图识别测试</strong>：使用快捷键 Alt+句号，然后框选包含文字或公式的区域</li>
+            <li><strong>右键菜单测试</strong>：选中文本后右键，或在页面空白处右键选择截图分析</li>
+            <li><strong>通知控制测试</strong>：使用 Alt+逗号 开启/关闭通知提示</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>选择题测试</h2>
+        <div class="question">
+            <p>下列关于光的性质的描述，正确的是：</p>
+            <p>A. 光只具有波动性</p>
+            <p>B. 光只具有粒子性</p>
+            <p>C. 光既具有波动性又具有粒子性</p>
+            <p>D. 光的性质取决于观察方式</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>填空题测试</h2>
+        <div class="question">
+            <p>植物进行光合作用需要的三个基本条件是：______、______、______。</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>判断题测试</h2>
+        <div class="question">
+            <p>在真空中，所有物体的自由落体运动加速度都相同。（ ）</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>简答题测试</h2>
+        <div class="question">
+            <p>请简述牛顿第二定律的内容及其物理意义。</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>论述题测试</h2>
+        <div class="question">
+            <p>论述人工智能在教育领域的应用现状、发展趋势以及可能带来的影响。</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>数学公式测试（截图识别）</h2>
+        <div class="math-formula">
+            <p>二次方程求根公式：</p>
+            <p>x = (-b ± √(b² - 4ac)) / 2a</p>
+        </div>
+        <div class="math-formula">
+            <p>欧拉公式：</p>
+            <p>e^(iπ) + 1 = 0</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>输入框测试</h2>
+        <p>在下面的输入框中测试自动输入功能：</p>
+        <input type="text" placeholder="单行文本输入框">
+        <textarea placeholder="多行文本输入框"></textarea>
+    </div>
+
+    <div class="test-section">
+        <h2>模型切换测试</h2>
+        <div class="question">
+            <p>选中下面的模型名称，然后使用快捷键快速设置：</p>
+            <p><strong>gpt-4</strong></p>
+            <p><strong>gemini-2.0-flash-exp</strong></p>
+            <p><strong>claude-3-sonnet</strong></p>
+        </div>
+    </div>
+
+</body>
+</html>

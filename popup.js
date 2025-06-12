@@ -7,12 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
     'model',
     'customModel',
     'ocrModel',
-    'customOcrModel'
+    'customOcrModel',
+    'showPreview'
   ], (result) => {
     document.getElementById('apiKey').value = result.apiKey || '';
     document.getElementById('apiEndpoint').value = result.apiEndpoint || '';
-    document.getElementById('promptTemplate').value = result.promptTemplate || '{text}';
-    
+    document.getElementById('promptTemplate').value = result.promptTemplate || '';
+    document.getElementById('showPreview').checked = result.showPreview !== false; // 默认为true
+
     // 处理推理模型
     const modelSelect = document.getElementById('model');
     const customModelGroup = document.getElementById('customModelGroup');
@@ -57,7 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKey = document.getElementById('apiKey').value.trim();
     const apiEndpoint = document.getElementById('apiEndpoint').value.trim();
     const promptTemplate = document.getElementById('promptTemplate').value.trim();
-    
+    const showPreview = document.getElementById('showPreview').checked;
+
     // 获取推理模型
     const modelSelect = document.getElementById('model');
     const customModelInput = document.getElementById('customModel');
@@ -88,9 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.sync.set({
       apiKey,
       apiEndpoint,
-      promptTemplate: promptTemplate || '{text}',
+      promptTemplate: promptTemplate || '', // 空字符串将使用默认模板
       model,
-      ocrModel
+      ocrModel,
+      showPreview
     }, () => {
       showStatus('设置已保存', true);
     });

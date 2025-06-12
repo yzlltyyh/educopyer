@@ -68,6 +68,15 @@
       font-size: 14px;
       color: #666;
     }
+    input[type="checkbox"] {
+      margin-right: 8px;
+      transform: scale(1.2);
+    }
+    label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -118,9 +127,16 @@
   
   <div class="form-group">
     <label for="promptTemplate">Prompt 模板:</label>
-    <textarea id="promptTemplate" placeholder="在这里输入您的prompt模板，使用{text}作为占位符">{text}</textarea>
+    <textarea id="promptTemplate" placeholder="在这里输入您的prompt模板，使用{text}作为占位符。默认为专业答题助手模式。"></textarea>
   </div>
-  
+
+  <div class="form-group">
+    <label>
+      <input type="checkbox" id="showPreview" checked>
+      截图后显示预览（左上角）
+    </label>
+  </div>
+
   <button id="saveButton">保存设置</button>
   
   <div id="status" class="status"></div>
